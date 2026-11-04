@@ -1,0 +1,10 @@
+const sim = new Sim(1941); sim.aiHook = sovietAI;
+const tank = sim.soldiers.find(s => s.veh); const tsq = sim.squads[tank.squad];
+let byHE = 0, byMG = 0, ctx = 'mg';
+const oe = sim.explodeAt.bind(sim); sim.explodeAt = (...a) => { const p = ctx; ctx = 'he'; oe(...a); ctx = p; };
+const ow = sim.wound.bind(sim);
+sim.wound = (s, part, E, by) => { const before = s.state; ow(s, part, E, by); if (by === tank && before < 2 && s.state >= 2) { if (E < 400) byHE++; else byMG++; } };
+sim.setOrders(tsq, [{ x: 250, z: 470, mode: 'move' }]);
+for (let turn = 1; turn <= 6; turn++) sim.runTurn();
+const vis = sim.soldiers.filter(s => s.side === 1);
+console.log('HE/sirpale', byHE, 'kk/räjähdys', byMG, 'S tappiot', sim.casualties[1], 'kuopissa elossa', vis.filter(s => sim.alive(s) && sim.inFox(s)).length);

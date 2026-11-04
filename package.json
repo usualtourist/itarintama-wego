@@ -1,0 +1,18 @@
+{
+  "name": "itarintama-wego",
+  "version": "1.0.0",
+  "private": true,
+  "description": "WeGo-taktiikkapeli itärintamalta: Bobrin kylä 1941 ja Zaborjen kukkula 1944.",
+  "type": "commonjs",
+  "scripts": {
+    "build": "tsc -p . && node build.mjs web",
+    "build:artifact": "tsc -p . && node build.mjs",
+    "serve": "npx --yes http-server public -p 8080 -c-1"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

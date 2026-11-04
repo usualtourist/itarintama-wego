@@ -1,0 +1,22 @@
+import { chromium } from '/home/claude/.npm-global/lib/node_modules/playwright/index.mjs';
+import fs from 'fs';
+const three = fs.readFileSync('vendor/three.module.min.js');
+const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const page = await browser.newPage({ viewport: { width: 1100, height: 680 } });
+const logs = [];
+page.on('pageerror', (e) => logs.push('PAGEERROR: ' + e.message));
+page.on('console', (m) => { if (m.type() === 'error') logs.push(m.text()); });
+await page.route('**/three.module.min.js', (r) => r.fulfill({ body: three, contentType: 'application/javascript' }));
+await page.route('https://fonts.googleapis.com/**', (r) => r.fulfill({ body: '', contentType: 'text/css' }));
+await page.goto('file://' + process.cwd() + '/build/index.html#bobr');
+await page.waitForTimeout(3000);
+await page.click('#btn-start');
+// näytetään myös viholliset tätä kuvaa varten
+await page.evaluate(() => { const g = window.__game; for (const s of g.sim.soldiers) if (s.side === 1) g.sim.sideSeen[0][s.id] = g.sim.time; g.sim.recordFrame(g.sim.frameCount - 1); const q = g.sim.squads.find(q => q.ai === 'reserve'); const c = g.sim.squadCenter(q); g.R.cam.tx = c.x; g.R.cam.tz = c.z; g.R.cam.dist = 24; g.R.cam.pitch = 0.5; g.R.cam.yaw = -1.2; });
+await page.waitForTimeout(800);
+await page.screenshot({ path: 'build/h1.png', timeout: 180000 });
+await page.keyboard.press('k');
+await page.waitForTimeout(600);
+await page.screenshot({ path: 'build/h2.png', timeout: 180000 });
+console.log(logs.join('\n'));
+await browser.close();

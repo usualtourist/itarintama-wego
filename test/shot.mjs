@@ -1,0 +1,32 @@
+import { chromium } from '/home/claude/.npm-global/lib/node_modules/playwright/index.mjs';
+import fs from 'fs';
+const three = fs.readFileSync('vendor/three.module.min.js');
+const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const page = await browser.newPage({ viewport: { width: 1100, height: 680 } });
+const logs = [];
+page.on('console', (m) => logs.push(m.type() + ': ' + m.text()));
+page.on('pageerror', (e) => logs.push('PAGEERROR: ' + e.message));
+await page.route('**/three.module.min.js', (r) => r.fulfill({ body: three, contentType: 'application/javascript' }));
+await page.route('https://fonts.googleapis.com/**', (r) => r.fulfill({ body: '', contentType: 'text/css' }));
+await page.goto('file://' + process.cwd() + '/build/index.html#bobr');
+await page.waitForTimeout(4000);
+await page.screenshot({ path: 'build/s1.png', timeout: 180000 });
+const steps = process.argv.slice(2);
+if (steps.includes('play')) {
+  await page.click('#btn-start');
+  await page.waitForTimeout(800);
+  await page.screenshot({ path: 'build/s2.png', timeout: 180000 });
+  await page.evaluate(() => { const g = window.__game; const sq = g.sim.squads[2]; g.sim.setOrders(sq, [{x:245,z:440,mode:'quick'}]); g.sim.setOrders(g.sim.squads[1], [{x:160,z:450,mode:'hunt'}]); g.refreshPaths(); g.updateHud(); });
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: 'build/s3.png', timeout: 180000 });
+  await page.click('#btn-go');
+  await page.waitForFunction(() => window.__game.phase === 'playback', null, { timeout: 120000 });
+  await page.evaluate(() => { const g = window.__game; g.playT = 30; g.playing = false; g.R.cam.tx = 240; g.R.cam.tz = 380; g.R.cam.dist = 160; g.R.cam.pitch = 0.45; });
+  await page.waitForTimeout(1200);
+  await page.screenshot({ path: 'build/s4.png', timeout: 180000 });
+  await page.evaluate(() => { const g = window.__game; g.select(2); g.focusSquad(2); g.R.cam.dist = 25; g.R.cam.pitch=0.3; });
+  await page.waitForTimeout(1200);
+  await page.screenshot({ path: 'build/s5.png', timeout: 180000 });
+}
+console.log(logs.slice(0, 30).join('\n'));
+await browser.close();

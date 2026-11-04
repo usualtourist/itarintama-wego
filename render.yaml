@@ -1,0 +1,17 @@
+# Render Blueprint: staattinen sivusto. Render ajaa build-komennon ja julkaisee public-kansion CDN:stä.
+services:
+  - type: web
+    name: itarintama-wego
+    runtime: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./public
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /index.html
+        name: Cache-Control
+        value: no-cache
+      - path: /three.module.min.js
+        name: Cache-Control
+        value: public, max-age=604800

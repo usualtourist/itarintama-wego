@@ -1,0 +1,25 @@
+import { chromium } from '/home/claude/.npm-global/lib/node_modules/playwright/index.mjs';
+import fs from 'fs';
+const three = fs.readFileSync('vendor/three.module.min.js');
+const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const page = await browser.newPage({ viewport: { width: 1100, height: 680 } });
+const logs = [];
+page.on('pageerror', (e) => logs.push('PAGEERROR: ' + e.message));
+page.on('console', (m) => { if (m.type() === 'error') logs.push(m.text()); });
+await page.route('**/three.module.min.js', (r) => r.fulfill({ body: three, contentType: 'application/javascript' }));
+await page.route('https://fonts.googleapis.com/**', (r) => r.fulfill({ body: '', contentType: 'text/css' }));
+await page.goto('file://' + process.cwd() + '/build/index.html#bobr');
+await page.waitForTimeout(3000);
+await page.click('#btn-start');
+// vaunu tielle tykin eteen, katsotaan toistoa
+await page.evaluate(() => { const g = window.__game; const sq = g.sim.squads[4]; g.sim.setOrders(sq, [{ x: 250, z: 440, mode: 'move' }]); g.select(4); });
+await page.evaluate(() => window.__game.mainAction());
+await page.waitForFunction(() => window.__game.phase === 'playback', null, { timeout: 120000 });
+const info = await page.evaluate(() => { const g = window.__game; const sh = g.sim.shots.filter(s => s.big && s.side === 1); const gun = g.sim.guns[0].gun; if (sh.length) g.playT = sh[0].t0 + 0.08; else g.playT = 59; g.playing = false; g.R.cam.tx = gun.x + 6; g.R.cam.tz = gun.z + 2; g.R.cam.dist = 16; g.R.cam.pitch = 0.3; g.R.cam.yaw = -2.2; return { n: sh.length, seen: gun.seen0, msgs: g.sim.msgs.map(m => m.text).filter(t => /Pz|tykki/.test(t)) }; });
+await page.waitForTimeout(1000);
+await page.screenshot({ path: 'build/g1.png', timeout: 180000 });
+await page.evaluate(() => { const g = window.__game; const t = g.sim.soldiers.find(s => s.veh); g.playT = 60; g.R.cam.tx = t.x; g.R.cam.tz = t.z; g.R.cam.dist = 26; g.R.cam.pitch = 0.35; g.R.cam.yaw = 1.2; });
+await page.waitForTimeout(800);
+await page.screenshot({ path: 'build/g2.png', timeout: 180000 });
+console.log(JSON.stringify(info), logs.join('\n'));
+await browser.close();

@@ -1,0 +1,18 @@
+import { chromium } from '/home/claude/.npm-global/lib/node_modules/playwright/index.mjs';
+import fs from 'fs';
+const three = fs.readFileSync('vendor/three.module.min.js');
+const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const page = await browser.newPage({ viewport: { width: 1100, height: 680 } });
+await page.route('**/three.module.min.js', (r) => r.fulfill({ body: three, contentType: 'application/javascript' }));
+await page.route('https://fonts.googleapis.com/**', (r) => r.fulfill({ body: '', contentType: 'text/css' }));
+await page.goto('file://' + process.cwd() + '/build/index.html#bobr');
+await page.waitForTimeout(3000);
+await page.click('#btn-start');
+await page.evaluate(() => { const g = window.__game; const t = g.sim.soldiers.find(s => s.veh); g.R.cam.tx = t.x; g.R.cam.tz = t.z - 4; g.R.cam.dist = 22; g.R.cam.pitch = 0.32; g.R.cam.yaw = 0.7; });
+await page.waitForTimeout(800);
+const info = await page.evaluate(() => { const g = window.__game; const r = g.canvas.getBoundingClientRect(); const t = g.sim.soldiers.find(s => s.veh); const mp = g.R.markerPos(t.id); const p = g.R.project(mp.x, mp.y, mp.z, r.width, r.height); return { p, id: t.id, sq: t.squad, el: document.elementFromPoint(p.x + r.left, p.y + r.top)?.id || document.elementFromPoint(p.x + r.left, p.y + r.top)?.className }; });
+console.log(JSON.stringify(info));
+await page.mouse.click(info.p.x, info.p.y);
+await page.waitForTimeout(300);
+console.log('sel', await page.evaluate(() => window.__game.sel));
+await browser.close();

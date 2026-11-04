@@ -1,0 +1,16 @@
+import { chromium } from '/home/claude/.npm-global/lib/node_modules/playwright/index.mjs';
+import fs from 'fs';
+const three = fs.readFileSync('vendor/three.module.min.js');
+const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const page = await browser.newPage({ viewport: { width: 1100, height: 680 } });
+const logs = []; page.on('pageerror', (e) => logs.push('PAGEERROR: ' + e.message));
+await page.route('**/three.module.min.js', (r) => r.fulfill({ body: three, contentType: 'application/javascript' }));
+await page.route('https://fonts.googleapis.com/**', (r) => r.fulfill({ body: '', contentType: 'text/css' }));
+await page.goto('file://' + process.cwd() + '/build/index.html#bobr');
+await page.waitForTimeout(3000);
+await page.click('#btn-start');
+await page.evaluate(() => { const g = window.__game; const q = g.sim.squads[3]; for (const id of q.members) { g.sim.soldiers[id].x += 80; g.sim.soldiers[id].tx += 80; } const v = g.sim.soldiers[q.members[4]]; v.state = 2; g.sim.updateC2(); g.sim.recordFrame(g.sim.frameCount - 1); g.select(3); g.updateHud(); });
+await page.waitForTimeout(600);
+await page.screenshot({ path: 'build/c1.png', timeout: 180000 });
+console.log(logs.join('\n'));
+await browser.close();

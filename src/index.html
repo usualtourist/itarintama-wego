@@ -1,0 +1,288 @@
+<title>Bobrin kylä 1941</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Stencil+One&family=IBM+Plex+Sans+Condensed:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Asettelu: koko ruudun 3D-näkymä, jonka päällä esikuntakartan henkinen HUD — reunoilla läpikuultavat paneelit. */
+:root {
+  color-scheme: dark;
+  --ink: #101310;
+  --panel: rgba(20, 24, 19, 0.88);
+  --panel-solid: #171b16;
+  --line: #394133;
+  --paper: #ece4cc;
+  --muted: #9ea38d;
+  --brass: #d6b76a;
+  --ger: #a6bccd;
+  --sov: #d8654f;
+  --ok: #93c06c;
+  --warn: #e2b44c;
+  --bad: #d85a46;
+  --f-display: 'Saira Stencil One', 'Impact', 'Arial Narrow', sans-serif;
+  --f-body: 'IBM Plex Sans Condensed', 'Arial Narrow', 'Roboto Condensed', system-ui, sans-serif;
+  --f-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+}
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body { background: var(--ink); color: var(--paper); font-family: var(--f-body); font-size: 14px; overflow: hidden; user-select: none; -webkit-user-select: none; }
+#view { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: crosshair; }
+#hud { position: fixed; inset: 0; pointer-events: none; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: max(10px, env(safe-area-inset-top, 0px)) max(10px, env(safe-area-inset-bottom, 0px)); display: grid; grid-template-columns: 236px 1fr 300px; grid-template-rows: auto minmax(0, 1fr) auto; gap: 10px; }
+#hud > * { pointer-events: auto; min-width: 0; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+kbd { font-family: var(--f-mono); font-size: 10px; color: var(--muted); border: 1px solid var(--line); border-radius: 3px; padding: 0 4px; }
+
+/* yläpalkki */
+#top { grid-column: 1 / -1; display: flex; align-items: center; gap: 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 7px 10px; flex-wrap: wrap; backdrop-filter: blur(4px); }
+.brand { display: flex; flex-direction: column; line-height: 1.05; }
+#scn-title { font-family: var(--f-display); font-size: 20px; letter-spacing: 0.04em; color: var(--brass); }
+#scn-date { font-size: 11px; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
+#objs { display: flex; gap: 6px; flex-wrap: wrap; flex: 1; min-width: 0; }
+.chip { display: inline-flex; gap: 6px; align-items: baseline; font-size: 12px; padding: 3px 8px; border-radius: 3px; border: 1px solid var(--line); background: rgba(0,0,0,0.25); }
+.chip b { font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+.chip.ger b { color: var(--ger); } .chip.sov b { color: var(--sov); } .chip.neu b { color: var(--warn); }
+.clock { font-family: var(--f-mono); font-variant-numeric: tabular-nums; display: flex; gap: 10px; font-size: 13px; }
+#turn { color: var(--paper); } #clock { color: var(--brass); }
+.topbtns { display: flex; gap: 6px; }
+.tbtn { background: transparent; border: 1px solid var(--line); border-radius: 3px; padding: 6px 10px; font-size: 13px; }
+.tbtn:hover { border-color: var(--muted); }
+.tbtn[aria-pressed="false"] { color: var(--muted); border-style: dashed; }
+.tog { display: none; }
+#btn-go { background: var(--brass); color: #1b1608; border: none; border-radius: 3px; padding: 7px 16px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; font-size: 13px; }
+#btn-go:disabled { opacity: 0.5; cursor: default; }
+#btn-go:not(:disabled):hover { filter: brightness(1.08); }
+
+/* joukot */
+#oob { grid-column: 1; grid-row: 2; align-self: start; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 8px; display: flex; flex-direction: column; gap: 6px; max-height: 100%; min-height: 0; overflow: auto; }
+.ptitle { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); padding: 0 2px 2px; }
+#oob-list { display: flex; flex-direction: column; gap: 5px; }
+.oob-item { display: grid; grid-template-columns: 1fr auto; gap: 1px 8px; text-align: left; background: rgba(0,0,0,0.22); border: 1px solid var(--line); border-left: 3px solid var(--ger); border-radius: 3px; padding: 5px 8px; }
+.oob-item:hover { background: rgba(255,255,255,0.04); }
+.oob-item.team { margin-left: 12px; border-left-style: dashed; }
+.oob-item.sel { border-color: var(--brass); border-left-color: var(--brass); background: rgba(214,183,106,0.1); }
+.oob-name { font-weight: 600; }
+.oob-men { font-family: var(--f-mono); font-variant-numeric: tabular-nums; color: var(--muted); }
+.oob-sub { grid-column: 1 / -1; font-size: 11px; color: var(--muted); }
+.oob-sub .noc2 { color: var(--warn); font-weight: 600; }
+.pill { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; padding: 1px 6px; border-radius: 2px; justify-self: start; font-weight: 600; }
+.pill.ok { color: var(--ok); background: rgba(147,192,108,0.13); } .pill.warn { color: var(--warn); background: rgba(226,180,76,0.13); } .pill.bad { color: var(--bad); background: rgba(216,90,70,0.15); }
+
+/* tapahtumaloki */
+#log { grid-column: 3; grid-row: 2; align-self: start; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 8px; max-height: 46vh; display: flex; flex-direction: column; gap: 4px; }
+#log-list { list-style: none; margin: 0; padding: 0; overflow: auto; font-size: 12px; display: flex; flex-direction: column; gap: 3px; }
+#log-list li { padding: 3px 6px; border-left: 2px solid var(--line); line-height: 1.3; }
+#log-list time { font-family: var(--f-mono); color: var(--muted); font-size: 10px; margin-right: 6px; }
+#log-list .k1 { border-color: var(--ger); } #log-list .k2 { border-color: var(--warn); } #log-list .k3 { border-color: var(--bad); color: #f1c7bd; } #log-list .k4 { border-color: var(--sov); }
+#log-empty { font-size: 12px; color: var(--muted); }
+#log-list:not(:empty) + #log-empty { display: none; }
+
+/* alapalkki */
+#bottom { grid-column: 1 / -1; grid-row: 3; pointer-events: none !important; display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+#unit { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; width: 400px; max-width: 100%; max-height: 31vh; overflow: auto; }
+.uhead { display: flex; align-items: center; gap: 8px; }
+#unit-name { font-family: var(--f-display); font-size: 17px; letter-spacing: 0.03em; }
+#unit-meta { font-size: 11px; color: var(--muted); margin: 2px 0 6px; }
+#unit table { width: 100%; border-collapse: collapse; font-size: 12px; }
+#unit td { padding: 3px 4px; border-top: 1px solid rgba(57,65,51,0.6); vertical-align: top; }
+#unit td small { display: block; color: var(--muted); font-size: 10.5px; font-variant-numeric: tabular-nums; }
+#unit td.rk { color: var(--muted); font-family: var(--f-mono); font-size: 10.5px; white-space: nowrap; }
+#unit tr { cursor: pointer; } #unit tr:hover td { background: rgba(255,255,255,0.03); }
+#unit tr.dead td { opacity: 0.45; } #unit tr.wnd td:nth-child(2) { color: var(--warn); }
+.bar { height: 4px; background: rgba(0,0,0,0.4); border-radius: 2px; overflow: hidden; width: 70px; margin-top: 3px; }
+.bar i { display: block; height: 100%; }
+.dock { flex: 1; display: flex; flex-direction: column; gap: 6px; align-items: center; min-width: 0; }
+#unit, #order-buttons, #playbar, #hint { pointer-events: auto; }
+.dock { pointer-events: none; }
+#hint { font-size: 12px; color: var(--paper); background: rgba(16,19,16,0.7); padding: 3px 10px; border-radius: 3px; text-align: center; }
+#hint:empty { display: none; }
+#order-buttons { display: flex; gap: 8px; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 6px 8px; flex-wrap: wrap; justify-content: center; }
+.ogroup { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+.ogroup + .ogroup { border-left: 1px solid var(--line); padding-left: 8px; }
+.olabel { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); writing-mode: vertical-rl; transform: rotate(180deg); }
+.obtn { display: inline-flex; align-items: center; gap: 6px; background: rgba(0,0,0,0.25); border: 1px solid var(--line); border-radius: 3px; padding: 5px 8px; font-size: 13px; }
+.obtn i { width: 10px; height: 3px; border-radius: 1px; display: inline-block; }
+.obtn:hover:not(:disabled) { border-color: var(--muted); }
+.obtn.on { border-color: var(--brass); background: rgba(214,183,106,0.16); }
+.obtn:disabled { opacity: 0.35; cursor: default; }
+#playbar { display: flex; gap: 8px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 6px 10px; width: min(640px, 100%); }
+#pb-slider { flex: 1; accent-color: var(--brass); min-width: 80px; }
+#pb-time { font-family: var(--f-mono); font-size: 12px; font-variant-numeric: tabular-nums; color: var(--muted); white-space: nowrap; }
+.pbb, .spd { background: rgba(0,0,0,0.25); border: 1px solid var(--line); border-radius: 3px; padding: 4px 8px; font-size: 12px; font-family: var(--f-mono); }
+.spd.on { border-color: var(--brass); color: var(--brass); }
+#pb-speeds { display: flex; gap: 3px; }
+body:not([data-phase="playback"]) #playbar { display: none; }
+body:not([data-phase="orders"]) #order-buttons { display: none; }
+
+/* karttamerkinnät */
+#labels { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+.sq-label { position: absolute; left: 0; top: 0; pointer-events: auto; cursor: pointer; font-size: 11px; font-weight: 600; white-space: nowrap; padding: 1px 6px; border-radius: 2px; background: rgba(16,19,16,0.78); border: 1px solid var(--ger); color: var(--paper); margin: -30px 0 0 -30px; display: flex; gap: 5px; }
+.sq-label b { font-family: var(--f-mono); font-weight: 500; }
+.sq-label b.ok { color: var(--ok); } .sq-label b.warn { color: var(--warn); } .sq-label b.bad { color: var(--bad); }
+.sq-label.sel { border-color: var(--brass); color: var(--brass); }
+.obj-label { position: absolute; left: 0; top: 0; font-family: var(--f-display); font-size: 13px; letter-spacing: 0.06em; color: var(--paper); text-shadow: 0 1px 3px #000, 0 0 8px #000; transform-origin: 0 0; margin-left: -50px; width: 100px; text-align: center; }
+.obj-label.ger { color: var(--ger); } .obj-label.sov { color: #f09a86; }
+#tip { position: fixed; left: 0; top: 0; pointer-events: none; background: var(--panel-solid); border: 1px solid var(--line); border-radius: 3px; padding: 5px 8px; font-size: 12px; line-height: 1.35; max-width: 260px; z-index: 30; }
+#tip b { display: block; color: var(--brass); font-weight: 600; }
+#toast { position: fixed; left: 50%; top: 84px; transform: translateX(-50%); background: var(--bad); color: #fff; padding: 6px 14px; border-radius: 3px; font-weight: 600; z-index: 40; }
+
+/* modaalit */
+.modal { position: fixed; inset: 0; background: rgba(8,10,8,0.62); display: grid; place-items: center; z-index: 50; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 16px; }
+.card { background: var(--panel-solid); border: 1px solid var(--line); border-radius: 4px; max-width: 620px; width: 100%; max-height: 92%; overflow: auto; padding: 22px 26px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+.card h1 { font-family: var(--f-display); font-weight: 400; color: var(--brass); font-size: 30px; margin: 0; letter-spacing: 0.03em; text-wrap: balance; }
+.eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); }
+.card p { line-height: 1.55; max-width: 62ch; }
+.forces { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0; }
+.force { border: 1px solid var(--line); border-left: 3px solid var(--ger); padding: 8px 10px; border-radius: 3px; font-size: 13px; }
+.force.sov { border-left-color: var(--sov); }
+.force b { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 3px; }
+body.picking #hud, body.picking #labels { visibility: hidden; }
+.pickcard { max-width: 720px; }
+#pick-list { display: grid; gap: 12px; margin-top: 14px; }
+.scn { display: grid; grid-template-columns: 1fr auto; gap: 4px 16px; text-align: left; background: rgba(0,0,0,0.25); border: 1px solid var(--line); border-left: 4px solid var(--brass); border-radius: 3px; padding: 14px 16px; }
+.scn:hover { border-color: var(--brass); background: rgba(214,183,106,0.08); }
+.scn h2 { font-family: var(--f-display); font-weight: 400; font-size: 22px; margin: 0; color: var(--paper); letter-spacing: 0.03em; }
+.scn .meta { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+.scn p { grid-column: 1 / -1; margin: 4px 0 0; font-size: 13px; line-height: 1.5; color: var(--paper); }
+.scn .side { align-self: start; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--brass); white-space: nowrap; }
+@media (max-width: 520px) { .scn { grid-template-columns: 1fr; } }
+.cta { background: var(--brass); color: #1b1608; border: none; border-radius: 3px; padding: 10px 22px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; }
+.keys { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 13px; margin: 10px 0; }
+.keys kbd { justify-self: start; font-size: 11px; color: var(--paper); }
+.endt { width: 100%; border-collapse: collapse; margin: 12px 0; font-variant-numeric: tabular-nums; }
+.endt th, .endt td { padding: 5px 8px; border-bottom: 1px solid var(--line); text-align: right; }
+.endt th:first-child, .endt td:first-child { text-align: left; color: var(--muted); }
+.endobj { font-size: 13px; color: var(--muted); }
+#computing { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); background: var(--panel-solid); border: 1px solid var(--line); padding: 14px 18px; border-radius: 4px; width: 280px; z-index: 45; text-align: center; font-size: 13px; }
+.cbar { height: 4px; background: rgba(0,0,0,0.4); margin-top: 8px; border-radius: 2px; overflow: hidden; }
+#comp-bar { height: 100%; width: 0; background: var(--brass); }
+#fatal { position: fixed; inset: auto 16px 16px 16px; background: var(--bad); color: #fff; padding: 10px; border-radius: 4px; z-index: 60; }
+
+@media (max-width: 900px) {
+  #hud { grid-template-columns: 1fr; }
+  #oob, #log { display: none; grid-column: 1; grid-row: 2; }
+  body.show-oob #oob { display: flex; }
+  body.show-log #log { display: flex; justify-self: end; width: min(300px, 100%); }
+  .tog { display: inline-block; }
+  #unit { width: 100%; max-height: 28vh; }
+  .olabel { display: none; }
+  .obtn kbd { display: none; }
+  #scn-title { font-size: 16px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<canvas id="view" aria-label="Taistelukenttä"></canvas>
+<div id="labels"></div>
+<div id="hud">
+  <header id="top">
+    <div class="brand"><span id="scn-title">Kylä</span><span id="scn-date"></span></div>
+    <div id="objs"></div>
+    <div class="clock"><span id="turn">Vuoro 1/20</span><span id="clock">klo 05.30</span></div>
+    <div class="topbtns">
+      <button class="tbtn tog" id="tog-oob" type="button">Joukot</button>
+      <button class="tbtn tog" id="tog-log" type="button">Loki</button>
+      <button class="tbtn" id="btn-sound" type="button" aria-pressed="true">Ääni</button>
+      <button class="tbtn" id="btn-roofs" type="button" aria-pressed="true">Katot</button>
+      <button class="tbtn" id="btn-help" type="button">Ohjeet</button>
+      <button class="tbtn" id="btn-replay" type="button" hidden>Katso vuoro uudelleen</button>
+      <button id="btn-go" type="button">Valmis ▶</button>
+    </div>
+  </header>
+  <aside id="oob"><div class="ptitle" id="oob-title">Oma joukkue</div><div id="oob-list"></div></aside>
+  <aside id="log"><div class="ptitle">Tapahtumat tällä vuorolla</div><ul id="log-list"></ul><div id="log-empty">Tapahtumat näkyvät täällä, kun vuoro etenee.</div></aside>
+  <div id="bottom">
+    <section id="unit" hidden>
+      <div class="uhead"><span id="unit-name"></span><span id="unit-state" class="pill ok"></span></div>
+      <div id="unit-meta"></div>
+      <table><tbody id="unit-rows"></tbody></table>
+    </section>
+    <div class="dock">
+      <div id="hint"></div>
+      <div id="order-buttons"></div>
+      <div id="playbar">
+        <button class="pbb" id="pb-play" type="button" aria-label="Toista tai pysäytä">❚❚</button>
+        <input type="range" id="pb-slider" min="0" max="60" step="0.05" value="0" aria-label="Toiston kohta">
+        <span id="pb-time">00.0 / 60 s</span>
+        <div id="pb-speeds"></div>
+        <button class="pbb" id="pb-skip" type="button">Loppuun</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="tip" hidden></div>
+<div id="toast" hidden></div>
+<div id="computing" hidden>Minuutti taistelua lasketaan…<div class="cbar"><div id="comp-bar"></div></div></div>
+
+<div class="modal" id="pick" hidden>
+  <div class="card pickcard">
+    <div class="eyebrow">Itärintama · WeGo-taktiikkapeli</div>
+    <h1>Valitse taistelu</h1>
+    <div id="pick-list"></div>
+  </div>
+</div>
+
+<div class="modal" id="brief" hidden>
+  <div class="card">
+    <div class="eyebrow" id="brief-meta"></div>
+    <h1 id="brief-title"></h1>
+    <div id="brief-text"></div>
+    <div class="forces">
+      <div class="force" id="force-own"></div>
+      <div class="force sov" id="force-enemy"></div>
+    </div>
+    <p><b>Vuorot:</b> annat käskyt, sitten minuutti taistelua lasketaan ja näytetään. Luodit lentävät oikeita ratoja: ne osuvat maastoon, aitoihin, puihin ja ihmisiin, ja ohi viuhuvat laukaukset painavat miehet maahan.</p>
+    <button class="cta" id="btn-start" type="button">Ota komento</button>
+  </div>
+</div>
+
+<div class="modal" id="help" hidden>
+  <div class="card">
+    <div class="eyebrow">Ohjeet</div>
+    <h1>Komentajan muistio</h1>
+    <div class="keys">
+      <kbd>Vasen klikkaus</kbd><span>Valitse ryhmä · anna käsky · vedä siirtääksesi karttaa</span>
+      <kbd>Oikea veto</kbd><span>Kierrä ja kallista kameraa (myös Alt + vasen veto)</span>
+      <kbd>Rulla · R / F</kbd><span>Zoomaa</span>
+      <kbd>W A S D · nuolet</kbd><span>Siirrä kameraa</span>
+      <kbd>Q / E · Z / X</kbd><span>Kierrä · kallista</span>
+      <kbd>1 – 5</kbd><span>Liiku · Nopea · Ryntäys · Etsi · Ryömi (Vaihto pitää tilan päällä)</span>
+      <kbd>T · G</kbd><span>Tuli kohteeseen tai alueelle · lopeta tuli</span>
+      <kbd>Y · H · L</kbd><span>Suunta · piiloudu · vaunun luukut auki/kiinni</span>
+      <kbd>⌫ · Esc</kbd><span>Poista käskyt · peru valinta</span>
+      <kbd>V · B · N</kbd><span>Savukranaatti tai vaunun savuheitin · tykistön räjähdetuli · tykistön savu (vain joukkueen johto)</span>
+      <kbd>J</kbd><span>Jaa ryhmä konekivääri- ja kivääritiimiin · yhdistä tiimit (alle 30 m, paikallaan)</span>
+      <kbd>M</kbd><span>Äänet päälle tai pois</span>
+      <kbd>K</kbd><span>Näytä tai piilota talojen katot (näet sisällä olevat)</span>
+      <kbd>Tab · Home</kbd><span>Seuraava ryhmä · kohdista kamera</span>
+      <kbd>Välilyönti</kbd><span>Päätä käskyvaihe · tauko toistossa</span>
+    </div>
+    <p><b>Liike.</b> Liiku on varovainen kävely, jossa ryhmä voi ampua. Nopea on hölkkä, jonka aikana vain konepistoolit ampuvat. Ryntäys on täysi juoksu ilman tulta ja väsyttää nopeasti. Etsi pysähtyy heti, kun uusi vihollinen havaitaan. Ryömi on hidas mutta vaikea havaita.</p>
+    <p><b>Tuli.</b> Konekiväärin on oltava paikallaan muutama sekunti ennen kuin se ampuu. Aluetulella voi lamauttaa paikkaa, jossa vihollinen arvellaan olevan (kysymysmerkit ovat ääni- tai vanhoja havaintoja).</p>
+    <p id="help-tank"></p>
+    <p id="help-armor"></p>
+    <p><b>Talot.</b> Ryhmä, jonka reittipiste on talossa, asettuu ikkunoihin uhan suuntaan. Hirsiseinä pysäyttää pistoolin luodit ja sirpaleet, kiväärin luoti menee läpi noin joka toisella osumalla. Ladon lautaseinä ei suojaa juuri lainkaan. Ikkunoista ja ovista kulkeminen hidastaa liikettä. Vaunut eivät pääse taloihin.</p>
+    <p><b>Epäsuora tuli.</b> Heitin ampuu korkealla kaarella (5 cm: 50–520 m, 82 mm: 85 m–3 km). Se tarvitsee tähystyksen omalta tiimiltään tai lähellä olevalta joukkueenjohtajalta, ja tulta korjataan iskemien perusteella. Joukkueenjohtaja voi pyytää patteriston tulta (1941: kaksi 10,5 cm tehtävää, 1944: kolme 122 mm tehtävää). Tuli tulee 1½–3 minuutin viiveellä ja on sitä tarkempaa, mitä paremmin johtaja näkee kohteen. Savu katkaisee näkölinjat ja ajelehtii tuulen mukana.</p>
+    <p><b>Tiimit.</b> Ryhmän voi jakaa konekivääritiimiin (varajohtaja, MG 34, apulaisampuja, patruunankantaja) ja kivääritiimiin (ryhmänjohtaja ja kiväärimiehet). Tyypillinen käyttö: kk-tiimi jää tulitukeen, kun kivääritiimi etenee. Tiimi on yhteydessä johtoon myös sisartiiminsä kautta, kun tiimien johtajat ovat alle 40 metrin päässä toisistaan.</p>
+    <p><b>Komentoketju.</b> Ryhmä on yhteydessä joukkueenjohtajaan, kun sen johtaja on alle 120 metrin päässä tämän näköyhteydessä tai alle 60 metrin päässä. Ilman yhteyttä uusi käsky lähtee liikkeelle 10–18 sekunnin viiveellä, muiden ryhmien havainnot tulevat perille hitaasti ja moraali palautuu hitaammin. Vaunulla on radio. Joukkueenjohtajan kaatuminen lamauttaa koko joukkueen.</p>
+    <p><b>Lääkintä.</b> Vakavasti haavoittunut vuotaa ja voi kuolla. Kun ryhmä ei ole kovan tulen alla, joku miehistä sitoo hänen haavansa noin 25 sekunnissa ja ottaa talteen hänen ammuksensa. Hoidettu haavoittunut maksaa loppupisteissä 8 pistettä, kaatunut 15.</p>
+    <p><b>Äänet.</b> Ääni kulkee 343 m/s: kaukaisen laukauksen suuliekki näkyy ennen pamausta, ja etäisyys tummentaa ääntä. Läheltä ohi menevä luoti napsahtaa ennen kuin ampujan laukaus kuuluu. Kuuntelija on kameran ja katsekohteen välissä, joten lähelle zoomatessa olet keskellä taistelua.</p>
+    <p><b>Moraali.</b> Ohilennot nostavat tukahdutusta. Painunut ryhmä ei liiku, murtunut vetäytyy omin päin. Tappiot ja johtajan menetys laskevat moraalia.</p>
+    <button class="cta" id="help-close" type="button">Sulje</button>
+  </div>
+</div>
+
+<div class="modal" id="end" hidden>
+  <div class="card">
+    <div class="eyebrow">Taistelu päättyi</div>
+    <h1 id="end-verdict"></h1>
+    <div id="end-body"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="cta" id="btn-again" type="button">Uusi peli (uusi ryhmitys)</button><button class="tbtn" id="btn-pick" type="button">Vaihda taistelua</button><button class="tbtn" id="btn-showmap" type="button">Näytä kartta</button></div>
+  </div>
+</div>
+<div id="fatal" hidden></div>
+
+<script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js" } }</script>
+<script type="module">
+/*__GAME__*/
+</script>
